@@ -3,6 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const xml2js = require('xml2js');
 
+// Elo rating constant
+const k = 32;
+
 function createWindow() {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
@@ -63,6 +66,8 @@ function readXmlFile(callback) {
                 return callback(parseErr); // Call the callback with an error
             }
 
+            let myMMR = 0;
+
             // Filter personal Information
             const playerMe = result.Attributes.Attr.filter(attr =>
                 attr.$.name.includes("MissionBagPlayer") && attr.$.value.includes("Rens")
@@ -88,6 +93,7 @@ function readXmlFile(callback) {
                     console.log("My MMR:");
                     personalMmrObjects.forEach(obj => {
                         console.log(`Value: ${obj.$.value}`);
+                        myMMR = parseInt(obj.$.value); // Update my MMR
                     });
                 } else {
                     console.log("No matching object found");
@@ -101,126 +107,93 @@ function readXmlFile(callback) {
                 attr.$.name.includes("MissionBagPlayer") && attr.$.name.includes("downedbyme") && attr.$.value === "1"
             );
             console.log("Player who I downed:");
-            const downedPlayerVariables = [];
-
             downedbymeObjects.forEach(obj => {
                 console.log(`Name: ${obj.$.name}, Value: ${obj.$.value}`);
                 const matches = obj.$.name.match(/(MissionBagPlayer_\d+_\d+)_downedbyme/);
                 if (matches) {
                     const downedPlayerVariable = `${matches[1]}_mmr`;
-                    downedPlayerVariables.push(downedPlayerVariable);
-
                     // Filter MMR for the downed player
                     const downedPlayerMmrObjects = result.Attributes.Attr.filter(attr =>
                         attr.$.name.includes(matches[1] + "_mmr")
                     );
-                    console.log(`MMR for ${matches[1]}:`);
                     downedPlayerMmrObjects.forEach(mmrObj => {
-                        console.log(`Value: ${mmrObj.$.value}`);
+                        console.log(`MMR for ${matches[1]}: ${mmrObj.$.value}`);
+                        myMMR += k * (1 - 1 / (1 + Math.pow(10, (parseInt(mmrObj.$.value) - myMMR) / 400)));
                     });
                 }
             });
-
-            if (downedPlayerVariables.length > 0) {
-            } else {
-                console.log("No downed player found.");
-            }
 
             // Filter enemy who i killed
             const killedbymeObjects = result.Attributes.Attr.filter(attr =>
                 attr.$.name.includes("MissionBagPlayer") && attr.$.name.includes("killedbyme") && attr.$.value === "1"
             );
             console.log("Player who I killed:");
-            const killedByMePlayerVariables = [];
-
             killedbymeObjects.forEach(obj => {
                 console.log(`Name: ${obj.$.name}, Value: ${obj.$.value}`);
                 const matches = obj.$.name.match(/(MissionBagPlayer_\d+_\d+)_killedbyme/);
                 if (matches) {
                     const killedByMePlayerVariable = `${matches[1]}_mmr`;
-                    killedByMePlayerVariables.push(killedByMePlayerVariable);
-
                     // Filter MMR for the player I killed
                     const killedByMePlayerMmrObjects = result.Attributes.Attr.filter(attr =>
                         attr.$.name.includes(matches[1] + "_mmr")
                     );
-                    console.log(`MMR for ${matches[1]}:`);
                     killedByMePlayerMmrObjects.forEach(mmrObj => {
-                        console.log(`Value: ${mmrObj.$.value}`);
+                        console.log(`MMR for ${matches[1]}: ${mmrObj.$.value}`);
+                        myMMR += k * (1 - 1 / (1 + Math.pow(10, (parseInt(mmrObj.$.value) - myMMR) / 400)));
                     });
                 }
             });
 
-            if (killedByMePlayerVariables.length > 0) {
-            } else {
-                console.log("No players killed by me found.");
-            }
-
-            // Repeat the above process for downed me and killed me events
             // Filter enemy who downed me
             const downedmeObjects = result.Attributes.Attr.filter(attr =>
                 attr.$.name.includes("MissionBagPlayer") && attr.$.name.includes("downedme") && attr.$.value === "1"
             );
             console.log("Player who downed me:");
-            const downedMePlayerVariables = [];
-
             downedmeObjects.forEach(obj => {
                 console.log(`Name: ${obj.$.name}, Value: ${obj.$.value}`);
                 const matches = obj.$.name.match(/(MissionBagPlayer_\d+_\d+)_downedme/);
                 if (matches) {
                     const downedMePlayerVariable = `${matches[1]}_mmr`;
-                    downedMePlayerVariables.push(downedMePlayerVariable);
-
                     // Filter MMR for the player who downed me
                     const downedMePlayerMmrObjects = result.Attributes.Attr.filter(attr =>
                         attr.$.name.includes(matches[1] + "_mmr")
                     );
-                    console.log(`MMR for ${matches[1]}:`);
                     downedMePlayerMmrObjects.forEach(mmrObj => {
-                        console.log(`Value: ${mmrObj.$.value}`);
+                        console.log(`MMR for ${matches[1]}: ${mmrObj.$.value}`);
+                        myMMR += k * (0 - 1 / (1 + Math.pow(10, (parseInt(myMMR) - parseInt(mmrObj.$.value)) / 400)));
                     });
                 }
             });
-
-            if (downedMePlayerVariables.length > 0) {
-                console.log("Variables:", downedMePlayerVariables.join(", "));
-            } else {
-                console.log("No players who downed me found.");
-            }
 
             // Filter enemy who killed me
             const killedmeObjects = result.Attributes.Attr.filter(attr =>
                 attr.$.name.includes("MissionBagPlayer") && attr.$.name.includes("killedme") && attr.$.value === "1"
             );
             console.log("Player who killed me:");
-            const killedMePlayerVariables = [];
-
             killedmeObjects.forEach(obj => {
                 console.log(`Name: ${obj.$.name}, Value: ${obj.$.value}`);
                 const matches = obj.$.name.match(/(MissionBagPlayer_\d+_\d+)_killedme/);
                 if (matches) {
                     const killedMePlayerVariable = `${matches[1]}_mmr`;
-                    killedMePlayerVariables.push(killedMePlayerVariable);
-
                     // Filter MMR for the player who killed me
                     const killedMePlayerMmrObjects = result.Attributes.Attr.filter(attr =>
                         attr.$.name.includes(matches[1] + "_mmr")
                     );
-                    console.log(`MMR for ${matches[1]}:`);
                     killedMePlayerMmrObjects.forEach(mmrObj => {
-                        console.log(`Value: ${mmrObj.$.value}`);
+                        console.log(`MMR for ${matches[1]}: ${mmrObj.$.value}`);
+                        myMMR += k * (0 - 1 / (1 + Math.pow(10, (parseInt(myMMR) - parseInt(mmrObj.$.value)) / 400)));
                     });
                 }
             });
 
-            if (killedMePlayerVariables.length > 0) {
-                console.log("Variables:", killedMePlayerVariables.join(", "));
-            } else {
-                console.log("No players who killed me found.");
-            }
+            // Print the predicted MMR
+            console.log();
+            console.log('Predicted MMR:', myMMR.toFixed(2));
+            console.log();
         });
     });
 }
 
 readXmlFile();
+
 
