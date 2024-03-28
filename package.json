@@ -1,0 +1,20 @@
+{
+  "name": "huntshowdown-data-tracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^29.1.6"
+  },
+  "dependencies": {
+    "electron-shortcuts": "^0.4.0",
+    "windows-shortcuts": "^0.1.6",
+    "xml2js": "^0.6.2"
+  }
+}
